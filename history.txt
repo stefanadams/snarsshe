@@ -1,4 +1,4 @@
-SnaRSShE: SNApshots via Rsync in Simple SHell Environment
+SnaRSShE: SNApshots via Rsync in a Simple SHell Environment
 
 Copyright (C) 2011- Stefan Adams  <stefan@cogentinnovators.com>
 

@@ -3,14 +3,14 @@
  	   2011- by Stefan Adams <stefan@cogentinnovators.com>
 -----------------------------------------------------------------------
 
-SnaRSShE (Snapshots via Rsync in Simple Shell Environment) is a simple,
+SnaRSShE (Snapshots via Rsync in a Simple Shell Environment) is a simple,
 lightweight (both in size and system requirements) server data archiving
 package designed for secure and reliable archiving of critical data of
 defined network systems.
 
 
 
-Requirements for MoSSHe:
+Requirements for SnaRSSHe:
 	* Unix Shell (Bourne-SH, BASH, Busybox)
 	* standard Unix text tools (fgrep, cut, head, mail, time, date,
 	  paste, sed, readlink, find, df...)
