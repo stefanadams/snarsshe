@@ -1,0 +1,39 @@
+SnaRSShE: SNApshots via Rsync in Simple SHell Environment
+
+Copyright (C) 2011- Stefan Adams  <stefan@cogentinnovators.com>
+
+This program is free software; you can redistribute it and/or
+modify it under the terms of the GNU General Public License
+as published by the Free Software Foundation; either version 2
+of the License, or (at your option) any later version.
+http://www.gnu.org/copyleft/gpl.html
+
+
+HISTORY
+
+The general idea was taken from the need to capture snapshots of data on
+a regular basis and have easy access to that data.  Originally, the script
+handled alerting as well but I've since recognized the sense in offloading
+the alerting to a separate system.
+
+Quite simply this script is a front-end for rsync which does the real work.
+This script just creates the environment and manages the rotation of
+archives.
+
+For bug reports and suggestions or if you just want to talk to me
+please contact me at stefan@cogentinnovators.com
+
+Updates will be available at  http://www.cogent-it.com/software/snarsshe/
+please check there for updates prior to submitting patches!
+
+
+------------------------------------------------------------------------
+
+v11.10.12
+(published the project)
+    * Stefan Adams <stefan@cogentinnovators.com>
+	- while the system has been written and re-written dozens of times
+	  and used in production for years this is the first time the
+	  system is being packaged and prepared for public use
+
+------------------------------------------------------------------------

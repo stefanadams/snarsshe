@@ -1,0 +1,4 @@
+SnaRSShE (Snapshots via Rsync in Simple Shell Environment) is a simple,
+lightweight (both in size and system requirements) server data archiving
+package designed for secure and reliable archiving of critical data of
+defined network systems.

@@ -1,0 +1,221 @@
+#!/bin/sh
+
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+#
+#       function library - please call with external script
+#
+#!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+#############################################################################
+# SnaRSSHe: Snapshots vai Rsync in a Simple SHell Environment
+#
+# Copyright (C) 2011- Stefan Adams
+#
+# This program is free software; you can redistribute it and/or 
+# modify it under the terms of the GNU General Public License   
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# For bug reports and suggestions or if you just want to talk to me please
+# contact me at stefan@cogentinnovators.com
+#
+# Updates will be available at  http://www.cogent-it.com/software/snarsshe/
+# please check there for updates prior to submitting patches!
+#
+# For list of changes please refer to the HISTORY file. Thanks.
+#############################################################################
+
+SNARSSHEVERSION="11.10.12"
+SNARSSHELOG=`date +"/var/log/snarsshe/snarsshelog.%Ykw%W"`
+[ -e /backup/snapshots/.config ] && . /backup/snapshots/.config
+
+#############################################################################
+###     SnaRSShE internal functions
+#############################################################################
+function SnarssheLog () {
+    date +"%Y-%m-%d %H:%M:%S - $@ " >> $SNARSSHELOG
+    [[ -t "0" || -p /dev/stdin ]] && date +"%Y-%m-%d %H:%M:%S - $@ "
+}
+ 
+clearpid () {
+    rm -f /var/run/snarsshe/$GROUP/$SERVER.pid
+}
+
+function SnarssheInstall () {
+if [ -z "$NOINSTALL" ]; then
+    [ -e /etc/snarsshe-firstrun ] || date +"%Y-%m-%d" > /etc/snarsshe-firstrun
+    mkdir -p /var/log/snarsshe
+    [ -e "$SNARSSHEDIR/snarsshe" ] && chmod 0755 "$SNARSSHEDIR/snarsshe"
+    [ -e "$SNARSSHEDIR/snarsshe" ] && chown root.root "$SNARSSHEDIR/snarsshe"
+    [ -e /etc/cron.daily/logrotate-snarsshe ] || ln -sf "$SNARSSHEDIR/cron/cron.daily_logrotate-snarsshe" /etc/cron.daily/logrotate-snarsshe
+    [ -e "$SNARSSHEDIR/cron/cron.daily_logrotate-snarsshe" ] && chmod 0755 "$SNARSSHEDIR/cron/cron.daily_logrotate-snarsshe"
+    [ -e "$SNARSSHEDIR/cron/cron.daily_logrotate-snarsshe" ] && chown root.root "$SNARSSHEDIR/cron/cron.daily_logrotate-snarsshe"
+    [ -e /etc/cron.d/snarsshe ] || ln -sf "$SNARSSHEDIR/cron/cron.d_snarsshe" /etc/cron.d/snarsshe
+    [ -e /etc/cron.d/snarsshe ] && chown root.root /etc/cron.d/snarsshe
+    [ -e "$SNARSSHEDIR/cron/cron.d_snarsshe" ] && chmod 0755 "$SNARSSHEDIR/cron/cron.d_snarsshe"
+    [ -e "$SNARSSHEDIR/cron/cron.d_snarsshe" ] && chown root.root "$SNARSSHEDIR/cron/cron.d_snarsshe"
+fi
+}
+function SnarssheUninstall () {
+    [ -e /etc/snarsshe-firstrun ] && mv /etc/snarsshe-firstrun /etc/snarsshe-finalrun
+    [ -e /var/log/snarsshe ] && rm -rf /var/log/snarsshe
+    rm -f /etc/cron.daily/logrotate-snarsshe /etc/cron.d/snarsshe
+    rm -rf /var/run/snarsshe
+    echo Uninstalled SnaRSSHE $SNARSSHEVERSION
+}
+function SnarsshePartitionCheck () {
+    if [ -z "$NOPARTCHECK" ]; then
+        case "$-" in
+            *i*)
+                if ! /bin/df /backup/snapshots | grep -q /backup/snapshots >/dev/null; then
+                    unset yn
+                    echo -n "For the safety of your system, it's recommended that the snapshots get their own partition.  Check /backup for its own partition? [Y/n] "; read yn;
+                    [ "$yn" != "n" -a "$yn" != "N" ] || exit;
+                    if ! /bin/df /backup | grep -q /backup >/dev/null; then
+                        /bin/df -h
+                        unset yn
+                        echo -n "For the safety of your system, it's recommended that the snapshots get their own partition.  Proceed anyway? [y/N] "; read yn;
+                        [ "$yn" != "y" -a "$yn" != "Y" ] && exit;
+                    fi
+                fi ;;
+            *) SnarssheLog "For the safety of your system, it's recommended that the snapshots get their own partition."; exit;;
+        esac
+    fi
+}
+function SnarssheMinFreeCheck () {
+    if [ "$MINFREE" ]; then
+        FREE=$(/bin/df -P /backup/snapshots | tail -1 | awk '{print $4}')
+        if [ "$FREE" -lt "$MINFREE" ]; then
+            SnarssheLog "Only $FREE bytes free, minimum $MINFREE bytes free requested.  Aborting."
+            exit
+        fi
+    fi
+}
+function SnarssheAclCheck () {
+    if [ -z "$NOACLCHECK" ]; then
+        if ! mount | grep $(/bin/df -P /backup/snapshots/ | tail -1 | cut -f1 -d' ') | grep -q acl; then
+            echo "It is recommended that you backup extended ACLs but the partition storing the backups does not support ACLs.  Enable? [Y/n] "; read yn;
+            [ "$yn" != "n" -a "$yn" != "N" ] || exit;
+            mount -o remount,acl $(/bin/df -P /backup/snapshots/ | tail -1 | cut -f1 -d' ')
+            if ! mount | grep $(/bin/df -P /backup/snapshots/ | tail -1 | cut -f1 -d' ') | grep -q acl; then
+                echo "Tried enabling ACL support on the backup data partition but failed.  Continue anyway? [y/N] "; read yn;
+                [ "$yn" != "y" -a "$yn" != "Y" ] && exit;
+            fi
+        fi
+    fi
+}
+
+function SnarssheEnableRepo () {
+    [ $# -eq 0 ] && return
+    SnarssheLog "SnarssheEnableRepo $@"
+    for i in "$@"; do
+        unset GROUP SERVER
+        i=`readlink -m "$i"`
+        declare -a SPLIT
+        SPLIT=(`echo "${i//\// }"`);
+        if [ "${SPLIT[0]}" = "backup" -a "${SPLIT[1]}" = "snapshots" ]; then
+            GROUP=${SPLIT[2]}; 
+            SERVER=${SPLIT[3]};
+        fi
+
+        [ -z "$GROUP" -o -z "$SERVER" ] && continue
+
+        mkdir -p /backup/snapshots/$GROUP/$SERVER
+        chmod -t /backup/snapshots/$GROUP/$SERVER
+        SnarssheLog "Enabled repo for $GROUP / $SERVER"
+    done
+}
+
+function SnarssheSnapshots () {
+    SnarssheLog "SnarssheSnapshots"
+    for archive in $(find /backup/snapshots -mindepth 2 -maxdepth 2 -type d); do
+        unset DAYS KEEP GROUP SERVER STORE DATE MYLASTRUN
+
+        startthis=$(date)
+
+        archive=$(readlink -m "$archive")
+        declare -a SPLIT
+        SPLIT=(`echo "${archive//\// }"`);
+        if [ "${SPLIT[0]}" = "backup" -a "${SPLIT[1]}" = "snapshots" ]; then
+            GROUP=${SPLIT[2]};
+            SERVER=${SPLIT[3]};
+        fi
+
+        [ -z "$GROUP" -o -z "$SERVER" ] && continue
+        SnarssheLog
+
+        # Skip disabled archives
+        [ -k /backup -o -k /backup/snapshots -o -k /backup/snapshots/$GROUP -o -k /backup/snapshots/$GROUP/$SERVER ] && { SnarssheLog "Skipping $GROUP / $SERVER"; continue; }
+
+        # Read configurations
+        [ -e /backup/snapshots/.config ] && . /backup/snapshots/.config
+        [ -e /backup/snapshots/$GROUP/.config ] && . /backup/snapshots/$GROUP/.config
+        [ -e /backup/snapshots/$GROUP/$SERVER/.config ] && . /backup/snapshots/$GROUP/$SERVER/.config
+
+        # Lock snapshot for this archive
+        [ ! -e /var/run/snarsshe ] && mkdir -p /var/run/snarsshe
+        [ ! -e /var/run/snarsshe/$GROUP ] && mkdir -p /var/run/snarsshe/$GROUP
+        [ -e /var/run/snarsshe/$GROUP/$SERVER.pid ] && [ -e /proc/$(< /var/run/snarsshe/$GROUP/$SERVER.pid) ] && { SnarssheLog "Already running for $GROUP / $SERVER."; continue; }
+        echo $$ > /var/run/snarsshe/$GROUP/$SERVER.pid
+
+        DATE=$(date +"%Y%m%d%H:%M:%S")
+        STORE=/backup/snapshots/$GROUP/$SERVER/$DATE
+
+        # Identify snapshots failed before script could exit.  Will be removed by next routine eventually.
+        SnarssheLog "Starting snapshot $GROUP / $SERVER / $DATE"
+        SnarssheLog "Removing failed attempts and empty archives..."
+        find $(readlink -m $STORE/..) -mindepth 1 -maxdepth 1 -type d ! -name "*-*-*" ! -name "$DATE" -delete -exec readlink -m '{}' \;
+        find $(readlink -m $STORE/..) -mindepth 1 -maxdepth 1 -type d ! -name "$DATE" -empty -delete -exec readlink -m '{}' \;
+        SnarssheLog "Currently $(find $(readlink -m $STORE/..) -mindepth 1 -maxdepth 1 -type d -name '*-*-*' | wc -l) active archives."
+
+        # Minimum minutes between snapshots
+        [ -e $(readlink -m $STORE/../latest) ] && MYLASTRUN=$(readlink -m $STORE/../latest | sed -e 's#^.*\([0-9]\{8\}\)\([0-9]\{2\}:[0-9]\{2\}:[0-9]\{2\}\).*#\1 \2#')
+        MYLASTRUN=$((($(date +%s)-$(date -d "$MYLASTRUN" +%s))/60))
+        [ -z "$MYLASTRUN" ] && MYLASTRUN=$((($(date +%s)-$(date -d "19700101 00:00:00" +%s))/60))
+        [ $MYLASTRUN -lt ${LASTRUN:-60} ] && { SnarssheLog "Snapshot for $GROUP / $SERVER last run less than ${LASTRUN:-60} minutes ago."; clearpid && continue; }
+
+        # Remove archives greater than DAYS days old as long as there will remain at least KEEP archives less than X days old
+        SnarssheLog "Removing archives older than ${DAYS:-14} days but keeping at least ${KEEP:-7} archives..."
+        RECENT=$(find $(readlink -m $STORE/..) -mindepth 1 -maxdepth 1 -type d ! -name ".*" -mtime -$((${DAYS:-14}-1)) | wc -l)
+        [ "$RECENT" -gt "${KEEP:-7}" ] && find $(readlink -m $STORE/..) -mindepth 1 -maxdepth 1 -type d ! -name ".*" -mtime +${DAYS:-14} -exec rm -rf '{}' \; -exec readlink -m '{}' \;
+
+        # Take the snapshot!
+        SnarssheLog "Taking snapshot of $GROUP / $SERVER..."
+        mkdir -p $STORE
+        if ssh -qq -n -o PreferredAuthentications=publickey -o StrictHostKeyChecking=no Administrator@$SERVER 'test -e /cygdrive'; then
+            rsync -e "ssh -l Administrator" -vazqhPF --stats --timeout 300 --delete --delete-excluded --log-file=$STORE.log --link-dest=$STORE/../latest $SERVER:/ $STORE
+        else
+            rsync -e ssh -vazqhAXPF --stats --timeout 3600 --delete --delete-excluded --log-file=$STORE.log --exclude /backup/snapshots --exclude /dev --exclude /proc --exclude /sys --link-dest=$STORE/../latest $SERVER:/ $STORE
+        fi
+        ret=$?
+        if [ "$ret" -eq 0 ]; then
+            SnarssheLog "+ Success, updating latest"
+            mv $STORE.log $STORE/../$DATE-ok-$ret.log
+            mv $STORE $STORE/../$DATE-ok-$ret
+            rm -i -f $STORE-ok-$ret/../latest $STORE-ok-$ret/../latest.log
+            ln -s $STORE-ok-$ret.log $STORE-ok-$ret/../latest.log
+            ln -s $STORE-ok-$ret $STORE-ok-$ret/../latest
+            clearpid ok
+        elif [ "$ret" -eq 23 -o "$ret" -eq 24 ]; then
+            SnarssheLog "+ Success with some transfer errors, updating latest"
+            mv $STORE.log $STORE/../$DATE-partial-$ret.log
+            mv $STORE $STORE/../$DATE-partial-$ret
+            rm -i -f $STORE-partial-$ret/../latest $STORE-partial-$ret/../latest.log
+            ln -s $STORE-partial-$ret.log $STORE-partial-$ret/../latest.log
+            ln -s $STORE-partial-$ret $STORE-partial-$ret/../latest
+            clearpid partial
+        elif [ "$ret" -eq 6 -o "$ret" -eq 20 -o "$ret" -eq 25 -o "$ret" -eq 30 -o "$ret" -eq 130 ]; then
+            SnarssheLog "  NOT updating latest but keeping archive -- Error: $ret"
+            mv $STORE.log $STORE/../$DATE-err-$ret.log
+            mv $STORE $STORE/../$DATE-err-$ret
+            clearpid err
+        else
+            SnarssheLog "- NOT updating latest and dumping archive -- Error: $ret"
+            rm -rf $STORE
+            clearpid fail
+        fi
+
+        runtime=`echo $(date +%s) - $(date -d "$startthis" +%s) | bc | awk '{print strftime("%H:%M:%S", $1,1)}'`
+        SnarssheLog "$GROUP / $SERVER run time: $runtime"
+    done
+}
