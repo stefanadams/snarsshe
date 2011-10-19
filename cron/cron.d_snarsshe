@@ -6,4 +6,4 @@
 SHELL=/bin/sh
 PATH=/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
-21 0 * * *	root	/usr/local/lib/snarsshe/snarsshe
+21 0 * * * root /usr/local/lib/snarsshe/snarsshe
