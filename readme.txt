@@ -14,7 +14,10 @@ Requirements for SnaRSSHe:
 	* Unix Shell (Bourne-SH, BASH, Busybox)
 	* standard Unix text tools (fgrep, cut, head, mail, time, date,
 	  paste, sed, readlink, find, df...)
-	* rsync
+	* rsync >= 3.0.1, with acl support
+	* coreutils >= 6.3 (specifically, readlink)
+	* gawk > 3.1.6
+	* bc
 	
 Hardware requirements:
 	* An existing directory for snapshots to be stored: /backup/snapshots

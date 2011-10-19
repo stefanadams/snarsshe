@@ -52,7 +52,7 @@ if [ -z "$NOINSTALL" ]; then
     [ -e "$SNARSSHEDIR/cron/cron.daily_logrotate-snarsshe" ] && chown root.root "$SNARSSHEDIR/cron/cron.daily_logrotate-snarsshe"
     [ -e /etc/cron.d/snarsshe ] || ln -sf "$SNARSSHEDIR/cron/cron.d_snarsshe" /etc/cron.d/snarsshe
     [ -e /etc/cron.d/snarsshe ] && chown root.root /etc/cron.d/snarsshe
-    [ -e "$SNARSSHEDIR/cron/cron.d_snarsshe" ] && chmod 0755 "$SNARSSHEDIR/cron/cron.d_snarsshe"
+    [ -e "$SNARSSHEDIR/cron/cron.d_snarsshe" ] && chmod 0644 "$SNARSSHEDIR/cron/cron.d_snarsshe"
     [ -e "$SNARSSHEDIR/cron/cron.d_snarsshe" ] && chown root.root "$SNARSSHEDIR/cron/cron.d_snarsshe"
 fi
 }
