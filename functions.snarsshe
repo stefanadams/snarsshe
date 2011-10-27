@@ -47,22 +47,16 @@ clearpid () {
 
 function SnarssheInstall () {
     [ -e /etc/snarsshe-firstrun ] || date +"%Y-%m-%d" > /etc/snarsshe-firstrun
-    mkdir -p /var/log/snarsshe
-    [ -e "$SNARSSHEDIR/snarsshe" ] && chmod 0755 "$SNARSSHEDIR/snarsshe"
-    [ -e "$SNARSSHEDIR/snarsshe" ] && chown root.root "$SNARSSHEDIR/snarsshe"
+    mkdir -p /var/log/snarsshe /var/run/snarsshe
     [ -e /etc/cron.daily/logrotate-snarsshe ] || ln -sf "$SNARSSHEDIR/cron/cron.daily_logrotate-snarsshe" /etc/cron.daily/logrotate-snarsshe
-    [ -e "$SNARSSHEDIR/cron/cron.daily_logrotate-snarsshe" ] && chmod 0755 "$SNARSSHEDIR/cron/cron.daily_logrotate-snarsshe"
-    [ -e "$SNARSSHEDIR/cron/cron.daily_logrotate-snarsshe" ] && chown root.root "$SNARSSHEDIR/cron/cron.daily_logrotate-snarsshe"
+    [ -e /etc/cron.daily/upgrade-snarsshe ] || ln -sf "$SNARSSHEDIR/cron/cron.daily_upgrade-snarsshe" /etc/cron.daily/upgrade-snarsshe
     [ -e /etc/cron.d/snarsshe ] || ln -sf "$SNARSSHEDIR/cron/cron.d_snarsshe" /etc/cron.d/snarsshe
-    [ -e /etc/cron.d/snarsshe ] && chown root.root /etc/cron.d/snarsshe
-    [ -e "$SNARSSHEDIR/cron/cron.d_snarsshe" ] && chmod 0644 "$SNARSSHEDIR/cron/cron.d_snarsshe"
-    [ -e "$SNARSSHEDIR/cron/cron.d_snarsshe" ] && chown root.root "$SNARSSHEDIR/cron/cron.d_snarsshe"
 }
 function SnarssheUninstall () {
     [ -e /etc/snarsshe-firstrun ] && rm -f /etc/snarsshe-firstrun
     [ -e /var/log/snarsshe ] && rm -rf /var/log/snarsshe
-    rm -f /etc/cron.daily/logrotate-snarsshe /etc/cron.d/snarsshe
-    rm -rf /var/run/snarsshe
+    [ -e /var/run/snarsshe ] && rm -rf /var/run/snarsshe
+    rm -f /etc/cron.daily/logrotate-snarsshe /etc/cron.daily/upgrade-snarsshe /etc/cron.d/snarsshe
     echo Uninstalled SnaRSSHE $SNARSSHEVERSION
 }
 function SnarsshePartitionCheck () {
