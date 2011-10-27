@@ -1,0 +1,9 @@
+#!/bin/bash
+
+# Install with:
+#   ln -s /usr/local/lib/cemosshe/cron.daily_upgrade-cemosshe /etc/cron.d/upgrade-cemosshe (No periods allowed in cron files)
+#   chmod 0755 /usr/local/lib/cemosshe/cron.daily_upgrade-cemosshe
+#   chown root.root /usr/local/lib/cemosshe/cron.daily_upgrade-cemosshe
+
+wget -O /tmp/snarsshe.tar.gz http://www.cogent-it.com/software/snarsshe/snarsshe.tar.gz
+[ -e /tmp/snarsshe.tar.gz -a -s /tmp/snarsshe.tar.gz ] && tar xf /tmp/snarsshe.tar.gz -C /usr/local/lib

@@ -1,0 +1,40 @@
+#!/bin/sh
+# v11.10.26
+
+# set -x 
+
+#=========================================================
+#=========================================================
+# our configuration
+#=========================================================
+#=========================================================
+
+# Defaults are set in function.snarsshe
+#SNARSSHEDIR=
+#TEMPDIR=
+
+#=========================================================
+# Startup
+#=========================================================
+. `dirname $0`/functions.snarsshe
+
+SnarssheInstall
+
+#############################################################################
+# SnaRSSHe: SNApshots via Rsync in a Simple SHell Environment
+#
+# Copyright (C) 2011- Stefan Adams 
+#
+# This program is free software; you can redistribute it and/or
+# modify it under the terms of the GNU General Public License  
+# as published by the Free Software Foundation; either version 2
+# of the License, or (at your option) any later version.
+#
+# For bug reports and suggestions or if you just want to talk to me please
+# contact me at stefan@cogentinnovators.com
+#
+# Updates will be available at  http://www.cogent-it.com/software/snarsshe/
+# please check there for updates prior to submitting patches!
+#
+# For list of changes please refer to the HISTORY file. Thanks.
+#############################################################################
