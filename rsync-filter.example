@@ -1,0 +1,16 @@
++ /root/
++ /root/**
++ /home/
++ /home/**
++ /boot/
++ /boot/**
++ /etc/
++ /etc/**
++ /usr/
++ /usr/local/
++ /usr/local/**
++ /opt/
++ /opt/**
++ /data/
++ /data/**
+- *
