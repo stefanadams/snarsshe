@@ -1,17 +1,26 @@
 #!/bin/sh
+# v11.10.26
 
-SNARSSHEDIR=`dirname $(readlink -f $0)`
-TEMPDIR=/tmp
+# set -x 
+
+#=========================================================
+#=========================================================
+# our configuration
+#=========================================================
+#=========================================================
+
+# Defaults are set in function.cemosshe
+#SNARSSHEDIR=
+#TEMPDIR=
 
 #=========================================================
 # Startup
 #=========================================================
-. $SNARSSHEDIR/functions.snarsshe
+. `dirname $0`/functions.snarsshe
 
-SnarssheInstall
 SnarsshePartitionCheck
 SnarssheMinFreeCheck
-SnarssheAclCheck
+SnarssheAclCheck 
 SnarssheSelfCheck
 
 SnarssheEnableRepo "$@"

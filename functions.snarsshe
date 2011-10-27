@@ -25,9 +25,13 @@
 # For list of changes please refer to the HISTORY file. Thanks.
 #############################################################################
 
-SNARSSHEVERSION="11.10.12"
+[ -z "$SNARSSHEDIR" ] && SNARSSHEDIR=`dirname $0`
+[ -z "$TEMPDIR" ] && TEMPDIR=/tmp
+
 SNARSSHELOG=`date +"/var/log/snarsshe/snarsshelog.%Ykw%W"`
+SNARSSHEVERSION="11.10.26"
 [ -e /backup/snapshots/.config ] && . /backup/snapshots/.config
+
 
 #############################################################################
 ###     SnaRSShE internal functions
@@ -42,7 +46,6 @@ clearpid () {
 }
 
 function SnarssheInstall () {
-if [ -z "$NOINSTALL" ]; then
     [ -e /etc/snarsshe-firstrun ] || date +"%Y-%m-%d" > /etc/snarsshe-firstrun
     mkdir -p /var/log/snarsshe
     [ -e "$SNARSSHEDIR/snarsshe" ] && chmod 0755 "$SNARSSHEDIR/snarsshe"
@@ -54,10 +57,9 @@ if [ -z "$NOINSTALL" ]; then
     [ -e /etc/cron.d/snarsshe ] && chown root.root /etc/cron.d/snarsshe
     [ -e "$SNARSSHEDIR/cron/cron.d_snarsshe" ] && chmod 0644 "$SNARSSHEDIR/cron/cron.d_snarsshe"
     [ -e "$SNARSSHEDIR/cron/cron.d_snarsshe" ] && chown root.root "$SNARSSHEDIR/cron/cron.d_snarsshe"
-fi
 }
 function SnarssheUninstall () {
-    [ -e /etc/snarsshe-firstrun ] && mv /etc/snarsshe-firstrun /etc/snarsshe-finalrun
+    [ -e /etc/snarsshe-firstrun ] && rm -f /etc/snarsshe-firstrun
     [ -e /var/log/snarsshe ] && rm -rf /var/log/snarsshe
     rm -f /etc/cron.daily/logrotate-snarsshe /etc/cron.d/snarsshe
     rm -rf /var/run/snarsshe

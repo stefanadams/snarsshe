@@ -1,21 +1,27 @@
 #!/bin/sh
+# v11.10.26
 
-SNARSSHEDIR=`dirname $(readlink -f $0)`
-TEMPDIR=/tmp
+# set -x 
+
+#=========================================================
+#=========================================================
+# our configuration
+#=========================================================
+#=========================================================
+
+# Defaults are set in function.snarsshe
+#SNARSSHEDIR=
+#TEMPDIR=
 
 #=========================================================
 # Startup
 #=========================================================
-. $SNARSSHEDIR/functions.snarsshe
+. `dirname $0`/functions.snarsshe
 
-SnarssheSelfCheck
 SnarssheUninstall
 
-# Always make this the last step
-rm -f $TEMPDIR/snarsshe_lock.?
-
 #############################################################################
-# SnaRMoSSHe: SNApshots via Rsync in a Simple SHell Environment
+# SnaRSSHe: SNApshots via Rsync in a Simple SHell Environment
 #
 # Copyright (C) 2011- Stefan Adams
 #

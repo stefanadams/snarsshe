@@ -29,6 +29,10 @@ please check there for updates prior to submitting patches!
 
 ------------------------------------------------------------------------
 
+v11.10.26
+    * Stefan Adams <stefan@cogentinnovators.com>
+	- Rewrote installation method to be easier to upgrade
+
 v11.10.12
 (published the project)
     * Stefan Adams <stefan@cogentinnovators.com>
