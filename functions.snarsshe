@@ -51,12 +51,13 @@ function SnarssheInstall () {
     [ -e /etc/cron.daily/logrotate-snarsshe ] || ln -sf "$SNARSSHEDIR/cron/cron.daily_logrotate-snarsshe" /etc/cron.daily/logrotate-snarsshe
     [ -e /etc/cron.daily/upgrade-snarsshe ] || ln -sf "$SNARSSHEDIR/cron/cron.daily_upgrade-snarsshe" /etc/cron.daily/upgrade-snarsshe
     [ -e /etc/cron.d/snarsshe ] || ln -sf "$SNARSSHEDIR/cron/cron.d_snarsshe" /etc/cron.d/snarsshe
+    [ -e /.rsync-filter ] || cp -a "$SNARSSHEDIR/rsync-filter.example" /.rsync-filter
 }
 function SnarssheUninstall () {
     [ -e /etc/snarsshe-firstrun ] && rm -f /etc/snarsshe-firstrun
     [ -e /var/log/snarsshe ] && rm -rf /var/log/snarsshe
     [ -e /var/run/snarsshe ] && rm -rf /var/run/snarsshe
-    rm -f /etc/cron.daily/logrotate-snarsshe /etc/cron.daily/upgrade-snarsshe /etc/cron.d/snarsshe
+    rm -f /etc/cron.daily/logrotate-snarsshe /etc/cron.daily/upgrade-snarsshe /etc/cron.d/snarsshe /.rsync-filter
     echo Uninstalled SnaRSSHE $SNARSSHEVERSION
 }
 function SnarsshePartitionCheck () {
