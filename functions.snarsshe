@@ -173,8 +173,8 @@ function SnarssheSnapshots () {
 
         # Remove archives greater than DAYS days old as long as there will remain at least KEEP archives less than X days old
         SnarssheLog "Removing archives older than ${DAYS:-14} days but keeping at least ${KEEP:-7} archives..."
-        RECENT=$(find $(readlink -m $STORE/..) -mindepth 1 -maxdepth 1 -type d ! -name ".*" -mtime -$((${DAYS:-14}-1)) | wc -l)
-        [ "$RECENT" -gt "${KEEP:-7}" ] && find $(readlink -m $STORE/..) -mindepth 1 -maxdepth 1 -type d ! -name ".*" -mtime +${DAYS:-14} -exec rm -rf '{}' \; -exec readlink -m '{}' \;
+        RECENT=$(find $(readlink -m $STORE/..) -mindepth 1 -maxdepth 1 -type d ! -name ".*" -ctime -$((${DAYS:-14}-1)) | wc -l)
+        [ "$RECENT" -gt "${KEEP:-7}" ] && find $(readlink -m $STORE/..) -mindepth 1 -maxdepth 1 -type d ! -name ".*" -ctime +${DAYS:-14} -exec rm -rf '{}' \; -exec readlink -m '{}' \;
 
         # Take the snapshot!
         SnarssheLog "Taking snapshot of $GROUP / $SERVER..."
@@ -207,8 +207,11 @@ function SnarssheSnapshots () {
             mv $STORE $STORE/../$DATE-err-$ret
             clearpid err
         else
-            SnarssheLog "- NOT updating latest and dumping archive -- Error: $ret"
-            rm -rf $STORE
+            #SnarssheLog "- NOT updating latest and dumping archive -- Error: $ret"
+            #rm -rf $STORE
+            SnarssheLog "  NOT updating latest but keeping archive -- Error: $ret"
+            mv $STORE.log $STORE/../$DATE-err-$ret.log
+            mv $STORE $STORE/../$DATE-err-$ret
             clearpid fail
         fi
 
